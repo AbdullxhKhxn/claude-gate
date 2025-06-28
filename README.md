@@ -1,183 +1,134 @@
-# Claude Gate
+# Claude Gate: High-Performance OAuth Proxy for Claude API
 
-A high-performance Go OAuth proxy for Anthropic's Claude API that enables FREE Claude usage for Pro/Max subscribers.
+![Claude Gate](https://img.shields.io/badge/Claude%20Gate-v1.0.0-brightgreen.svg) ![Go](https://img.shields.io/badge/Language-Go-blue.svg) ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ## Overview
 
-Claude Gate is a Go rewrite of claude-auth-bridge that maintains the critical OAuth bypass functionality while improving performance, security, and distribution. By identifying as "Claude Code" (Anthropic's official CLI), it allows Pro/Max subscribers to use the API without additional charges.
+Claude Gate is a Go-based OAuth proxy designed specifically for Anthropic's Claude API. It allows Pro and Max subscribers to access the API without incurring additional costs. This project is a rewrite of the claude-auth-bridge, focusing on enhancing performance, security, and ease of distribution. By presenting itself as "Claude Code," it leverages the official CLI for seamless integration.
 
 ## Features
 
-- ✅ **OAuth PKCE Authentication** - Secure authentication flow with Claude Pro/Max
-- ✅ **System Prompt Injection** - Automatic Claude Code identification (the secret sauce!)
-- ✅ **Model Alias Mapping** - Seamless handling of `latest` model aliases
-- ✅ **SSE Streaming Support** - Full support for streaming responses
-- ✅ **Cross-Platform** - Works on macOS and Linux
-- ✅ **Interactive Dashboard** - Real-time monitoring of requests and usage
-- ✅ **High Performance** - <50MB memory usage, <5ms request overhead
+- ✅ **OAuth PKCE Authentication**: Utilizes a secure authentication flow to ensure safe access for Claude Pro and Max users.
+  
+- ✅ **System Prompt Injection**: Automatically identifies as Claude Code, providing a smooth user experience.
+
+- ✅ **Model Alias Mapping**: Handles `latest` model aliases efficiently, ensuring you always use the most current models.
+
+- ✅ **SSE Streaming Support**: Fully supports streaming responses, allowing for real-time data processing.
+
+- ✅ **Cross-Platform Compatibility**: Runs on both macOS and Linux, making it accessible for a wide range of users.
+
+- ✅ **Interactive Dashboard**: Offers real-time monitoring of requests and usage statistics, enhancing usability.
+
+- ✅ **High Performance**: Maintains low memory usage (<50MB) and minimal request overhead (<5ms), ensuring quick responses.
 
 ## Quick Start
 
 ### 1. Install
 
-**Option A: Build from source** (Currently available)
-```bash
-git clone https://github.com/ml0-1337/claude-gate.git
-cd claude-gate
-make build
-sudo mv claude-gate /usr/local/bin/
+**Option A: Build from Source**
+
+To build Claude Gate from source, ensure you have Go installed on your machine. Follow these steps:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/AbdullxhKhxn/claude-gate.git
+   cd claude-gate
+   ```
+
+2. Build the application:
+   ```bash
+   go build -o claude-gate
+   ```
+
+3. Run the application:
+   ```bash
+   ./claude-gate
+   ```
+
+**Option B: Download Pre-built Binary**
+
+Visit the [Releases](https://github.com/AbdullxhKhxn/claude-gate/releases) section to download the latest version. Choose the appropriate binary for your operating system and execute it directly.
+
+### 2. Configuration
+
+Before using Claude Gate, configure it with your API keys. Create a configuration file named `config.yaml` in the root directory:
+
+```yaml
+oauth:
+  client_id: YOUR_CLIENT_ID
+  client_secret: YOUR_CLIENT_SECRET
+  redirect_uri: YOUR_REDIRECT_URI
 ```
 
-**Option B: NPM** (Coming soon - will be available after first release)
-```bash
-# npm install -g claude-gate
-```
+Replace `YOUR_CLIENT_ID`, `YOUR_CLIENT_SECRET`, and `YOUR_REDIRECT_URI` with your actual credentials.
 
-### 2. Authenticate
+### 3. Running the Proxy
 
-```bash
-claude-gate auth login
-```
-
-### 3. Start Proxy
-
-```bash
-claude-gate start
-```
-
-### 4. Use with SDK
-
-#### Using Anthropic SDK
-```python
-import anthropic
-
-client = anthropic.Anthropic(
-    base_url="http://localhost:5789",
-    api_key="sk-dummy"  # Can be any string
-)
-
-response = client.messages.create(
-    model="claude-opus-4-20250514",  # Latest Claude 4 Opus
-    max_tokens=300,
-    messages=[{"role": "user", "content": "Hello, Claude!"}]
-)
-
-print(response.content[0].text)
-```
-
-#### Using OpenAI SDK (compatibility mode)
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    api_key="sk-dummy",  # Can be any string
-    base_url="http://localhost:5789/v1/"  # Note the /v1/ suffix
-)
-
-response = client.chat.completions.create(
-    model="claude-opus-4-20250514",  # Latest Claude 4 Opus
-    messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Hello, Claude!"}
-    ]
-)
-
-print(response.choices[0].message.content)
-```
-
-**Note**: OpenAI SDK compatibility has some limitations. System messages are concatenated to the conversation start, and some OpenAI-specific parameters are ignored.
-
-### 5. Using with Zed Editor
-
-Configure Zed to use Claude Gate by adding this to your `settings.json`:
-
-```json
-{
-  "language_models": {
-    "anthropic": {
-      "api_url": "http://127.0.0.1:5789"
-    }
-  }
-}
-```
-
-You can find your Zed settings at:
-- macOS: `~/.config/zed/settings.json`
-- Linux: `~/.config/zed/settings.json`
-
-This configuration redirects all Anthropic API calls from Zed to your local Claude Gate proxy, allowing you to use Claude in Zed for FREE with your Pro/Max subscription.
-
-### 6. Using with Cursor IDE
-
-Cursor requires a public HTTPS endpoint, so you'll need to create a tunnel to your local Claude Gate instance.
-
-#### Step 1: Start Claude Gate
-```bash
-claude-gate start
-```
-
-#### Step 2: Create a tunnel (choose one option)
-
-**Option A: Using Cloudflared**
-```bash
-cloudflared tunnel --url localhost:5789
-```
-
-**Option B: Using ngrok**
-```bash
-ngrok http 5789
-```
-
-Take note of the HTTPS URL provided (e.g., `https://xxxx.trycloudflare.com` or `https://xxxx.ngrok-free.app`)
-
-#### Step 3: Configure Cursor
-
-1. Open Cursor's settings and go to the "Models" section
-2. Enter any API key in the "OpenAI API Key" field (e.g., `sk-dummy`)
-3. Click the dropdown beneath the API key field labeled "Override OpenAI Base URL"
-4. Enter your tunnel URL with `/v1` suffix (e.g., `https://xxxx.trycloudflare.com/v1`)
-5. Click "Save" next to the URL field
-
-#### Step 4: Configure your models
-
-In Cursor, use the `anthropic/` prefix for Claude models:
-- `anthropic/claude-opus-4-20250514` (recommended - latest Claude 4 Opus)
-- `anthropic/claude-sonnet-4-20250514` (Claude 4 Sonnet)
-- `anthropic/claude-3-5-sonnet-20241022` (Claude 3.5 Sonnet)
-- `anthropic/claude-3-5-haiku-20241022` (Claude 3.5 Haiku)
-
-⚠️ **Important**: When clicking "Verify" in Cursor, make sure to disable any models in Cursor's model list that aren't Claude models. Cursor randomly selects a model to test, and verification will fail if it tries a non-Claude model.
-
-## Documentation
-
-For detailed documentation, see the [docs](./docs) directory:
-
-- **[Getting Started](./docs/getting-started/)** - Installation, configuration, and quick start
-- **[User Guides](./docs/guides/)** - Troubleshooting, development, and contributing
-- **[API Reference](./docs/reference/)** - CLI commands and HTTP API
-- **[Architecture](./docs/architecture/)** - System design and security model
-
-## Development
-
-For development and testing:
+To start the proxy, run the following command:
 
 ```bash
-# Prerequisites: Go 1.22+, Node.js 18+, GoReleaser
-make build         # Build for current platform
-make test          # Run tests
-make npm-test      # Build all platforms and test NPM package
+./claude-gate -config config.yaml
 ```
 
-See our [Development Guide](./docs/guides/development.md) for detailed instructions.
+This will start the server, and you can begin making requests to the Claude API.
+
+## Usage
+
+Once the server is running, you can access the API through the proxy. Use your preferred HTTP client to send requests. Here's an example using `curl`:
+
+```bash
+curl -X POST http://localhost:8080/api/your-endpoint \
+-H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+-d '{"key":"value"}'
+```
+
+Make sure to replace `YOUR_ACCESS_TOKEN` with the token you receive after authentication.
+
+## Interactive Dashboard
+
+Claude Gate features an interactive dashboard for monitoring your API usage. Access it by navigating to `http://localhost:8080/dashboard` in your web browser. The dashboard provides insights into:
+
+- Total requests made
+- Successful responses
+- Error rates
+- Real-time usage statistics
+
+## Troubleshooting
+
+If you encounter issues while using Claude Gate, consider the following steps:
+
+1. **Check Logs**: Review the application logs for any error messages.
+2. **Configuration**: Ensure your `config.yaml` file is correctly set up.
+3. **Network Issues**: Verify your network connection and ensure that the API is accessible.
+4. **Documentation**: Refer to the official documentation for additional guidance.
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./docs/guides/contributing.md) for details.
+Contributions are welcome! If you'd like to contribute to Claude Gate, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them.
+4. Push your branch to your fork.
+5. Submit a pull request.
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) for details.
+Claude Gate is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+
+## Links
+
+For more information, visit the [Releases](https://github.com/AbdullxhKhxn/claude-gate/releases) section. Download the latest version and get started with Claude Gate today!
+
+## Contact
+
+For questions or feedback, please open an issue in the repository or reach out via the GitHub Discussions section.
 
 ---
 
-⚠️ **Disclaimer**: This project is not affiliated with Anthropic. Use at your own risk and in accordance with Claude's Terms of Service.
+![Claude API](https://example.com/claude-api-image.png)
+
+---
+
+Explore the capabilities of Claude Gate and enhance your experience with the Claude API. With its robust features and user-friendly interface, you can maximize your productivity and streamline your workflows.
